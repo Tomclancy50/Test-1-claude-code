@@ -1,0 +1,68 @@
+name: Build APKs
+
+# Builds both debug APKs in the cloud and publishes them to a single, always-
+# current "Latest build" GitHub Release, so you can tap-to-download each .apk
+# straight onto your phone / Kindles — no zip to extract.
+#
+# Trigger it from the GitHub mobile app or website (Actions -> "Build APKs" ->
+# Run workflow), or it runs automatically on every push / pull request.
+# Grab the APKs afterwards from the repo's Releases page (newest is at the top,
+# stable link: <repo>/releases/latest).
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write # needed to create the release and its tag
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Build debug APKs
+        run: gradle :parent-app:assembleDebug :kid-app:assembleDebug --no-daemon --stacktrace
+
+      # Publish only from the main line / working branch (and manual runs), not
+      # from pull_request events or unrelated branch pushes.
+      - name: Publish APKs to "Latest build" release
+        if: >-
+          github.event_name == 'workflow_dispatch' ||
+          (github.event_name == 'push' &&
+           (github.ref == 'refs/heads/main' ||
+            github.ref == 'refs/heads/claude/android-wifi-sync-kindle-mgF4s'))
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Delete-and-recreate keeps one clean release at a stable URL with the
+          # freshest APKs (and re-points the tag at this commit).
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest \
+            --target "$GITHUB_SHA" \
+            --title "Latest build" \
+            --prerelease \
+            --notes "Automatically built debug APKs from \`$GITHUB_REF_NAME\` ($GITHUB_SHA).
+
+          - **parent-app-debug.apk** — install on your phone.
+          - **kid-app-debug.apk** — install on each Kindle Fire.
+
+          Tap an .apk below to download, then open it to install (allow installs from unknown sources when prompted)." \
+            parent-app/build/outputs/apk/debug/*.apk \
+            kid-app/build/outputs/apk/debug/*.apk
