@@ -9,7 +9,9 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        minSdk = 24
+        // Kept at 22 so the kid app can support older Fire tablets; this module
+        // only uses version-guarded APIs, nothing that actually requires >22.
+        minSdk = 22
         consumerProguardFiles("consumer-rules.pro")
     }
 
