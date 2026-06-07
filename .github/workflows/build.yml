@@ -1,0 +1,48 @@
+name: Build APKs
+
+# Builds both debug APKs in the cloud. Trigger it from the GitHub mobile app or
+# website (no PC needed): Actions tab -> "Build APKs" -> Run workflow, or it runs
+# automatically on every push / pull request. Download the APKs afterwards from
+# the run's "Artifacts" section, then sideload them onto your phone / Kindles.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10.2"
+
+      - name: Build debug APKs
+        run: gradle :parent-app:assembleDebug :kid-app:assembleDebug --no-daemon --stacktrace
+
+      - name: Upload parent-app APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: parent-app-debug
+          path: parent-app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload kid-app APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kid-app-debug
+          path: kid-app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
