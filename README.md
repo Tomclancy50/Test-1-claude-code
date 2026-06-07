@@ -65,7 +65,26 @@ newer one, which the result message tells you.)
 
 ---
 
-## Building
+## Getting the apps (no PC needed)
+
+The easiest way — you don't compile anything yourself. GitHub builds the APKs in
+the cloud and publishes them to a release you can download straight to a phone:
+
+1. A GitHub Actions workflow (`.github/workflows/build.yml`) builds both APKs on
+   every push, and on manual runs (**Actions → Build APKs → Run workflow**).
+2. When it succeeds it publishes/refreshes a single **"Latest build"** release.
+   Open the repo's **Releases** page (stable link: `…/releases/latest`).
+3. Under **Assets**, tap to download:
+   - **`parent-app-debug.apk`** → install on your phone.
+   - **`kid-app-debug.apk`** → install on each Kindle Fire.
+4. Open each `.apk` to install (allow "install from unknown sources" if asked).
+
+That one release link always carries the newest build. It's marked *pre-release*
+because these are debug builds — that's expected and fine for sideloading.
+
+---
+
+## Building it yourself
 
 You need **Android Studio** (Ladybug / 2024.2 or newer) or a local Gradle 8.10+
 with the Android SDK (compileSdk 34, JDK 17).
